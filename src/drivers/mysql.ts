@@ -47,7 +47,7 @@ export class MysqlDriver implements DatabaseDriver {
       if (msg.includes("Unknown database")) {
         throw new Error(`MySQL database not found. ${msg}`);
       }
-      throw new Error(`MySQL connection failed: ${msg}`);
+      throw new Error("MySQL connection failed (unknown error)");
     }
   }
 

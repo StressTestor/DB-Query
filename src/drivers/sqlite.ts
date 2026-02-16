@@ -35,6 +35,17 @@ export class SqliteDriver implements DatabaseDriver {
 
   async query(sql: string, limit: number, _timeoutMs: number): Promise<QueryResult> {
     this.ensureConnected();
+
+    // NOTE: DatabaseSync is synchronous and does not support query timeouts.
+    // A real timeout would require worker_threads, which is out of scope for now.
+    // As a basic DoS prevention, reject very large queries.
+    if (sql.length > 10_000) {
+      throw new Error("Query too long — SQLite queries are limited to 10,000 characters as a DoS safeguard.");
+    }
+    if (_timeoutMs > 0) {
+      console.warn("db-query: SQLite driver does not enforce query timeouts (DatabaseSync is synchronous). Consider using postgres or mysql for timeout support.");
+    }
+
     // Wrap with LIMIT if it looks like a SELECT and doesn't already have one
     let wrappedSql = sql;
     const upper = sql.trim().toUpperCase();

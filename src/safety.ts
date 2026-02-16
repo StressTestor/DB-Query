@@ -1,15 +1,6 @@
-const MUTATION_PATTERNS = [
-  /^\s*INSERT\b/i,
-  /^\s*UPDATE\b/i,
-  /^\s*DELETE\b/i,
-  /^\s*DROP\b/i,
-  /^\s*ALTER\b/i,
-  /^\s*TRUNCATE\b/i,
-  /^\s*CREATE\b/i,
-  /^\s*REPLACE\b/i,
-  /^\s*MERGE\b/i,
-  /^\s*GRANT\b/i,
-  /^\s*REVOKE\b/i,
+const MUTATION_KEYWORDS = [
+  "INSERT", "UPDATE", "DELETE", "DROP", "ALTER",
+  "TRUNCATE", "CREATE", "REPLACE", "MERGE", "GRANT", "REVOKE",
 ];
 
 export interface SafetyResult {
@@ -18,21 +9,49 @@ export interface SafetyResult {
 }
 
 /**
+ * Strip string literals and comments from SQL so keyword detection
+ * doesn't false-positive on values like 'DROP me a line'.
+ */
+function stripLiteralsAndComments(sql: string): string {
+  return sql
+    // Remove single-quoted strings
+    .replace(/'(?:[^'\\]|\\.)*'/g, "")
+    // Remove double-quoted identifiers
+    .replace(/"(?:[^"\\]|\\.)*"/g, "")
+    // Remove block comments
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    // Remove line comments
+    .replace(/--[^\n]*/g, "");
+}
+
+/**
  * Check if a query is safe to run given the mutation policy.
  * This is NOT about SQL injection — the agent IS the user here.
  * This prevents accidental destructive operations.
+ *
+ * Scans the entire query body (not just the first token) to catch
+ * CTE bypass (WITH x AS (DELETE ...)) and multi-statement bypass (; DROP ...).
  */
 export function validateQuery(query: string, allowMutations: boolean): SafetyResult {
   if (allowMutations) return { allowed: true };
 
   const trimmed = query.trim();
 
-  for (const pattern of MUTATION_PATTERNS) {
-    if (pattern.test(trimmed)) {
-      const verb = trimmed.split(/\s+/)[0].toUpperCase();
+  // Block multiple statements: strip trailing semicolon, then reject if any remain
+  const stripped = trimmed.replace(/;\s*$/, "");
+  if (stripped.includes(";")) {
+    return { allowed: false, reason: "multiple statements not allowed" };
+  }
+
+  // Strip literals and comments so keywords inside strings don't trigger blocks
+  const sanitized = stripLiteralsAndComments(trimmed);
+
+  for (const keyword of MUTATION_KEYWORDS) {
+    const re = new RegExp(`\\b${keyword}\\b`, "i");
+    if (re.test(sanitized)) {
       return {
         allowed: false,
-        reason: `${verb} blocked — mutations are disabled for this connection. Set allowMutations: true in config or per-connection readOnly: false to allow writes.`,
+        reason: `${keyword} blocked — mutations are disabled for this connection. Set allowMutations: true in config or per-connection readOnly: false to allow writes.`,
       };
     }
   }

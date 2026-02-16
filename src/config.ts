@@ -26,8 +26,8 @@ export function resolveConfig(raw?: Record<string, unknown>): DbQueryConfig {
   return {
     connections: (raw.connections as Record<string, ConnectionConfig>) ?? {},
     defaultConnection: (raw.defaultConnection as string) ?? Object.keys((raw.connections as object) ?? {})[0] ?? "",
-    maxRows: Math.min((raw.maxRows as number) ?? 1000, 10000),
-    queryTimeout: (raw.queryTimeout as number) ?? 30000,
+    maxRows: Math.min(Math.max(1, (raw.maxRows as number) ?? 1000), 10000),
+    queryTimeout: Math.max(1000, (raw.queryTimeout as number) ?? 30000),
     allowMutations: (raw.allowMutations as boolean) ?? false,
   };
 }

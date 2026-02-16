@@ -42,7 +42,7 @@ export class PostgresDriver implements DatabaseDriver {
       if (msg.includes("does not exist")) {
         throw new Error(`PostgreSQL database not found. ${msg}`);
       }
-      throw new Error(`PostgreSQL connection failed: ${msg}`);
+      throw new Error("PostgreSQL connection failed (unknown error)");
     }
   }
 
