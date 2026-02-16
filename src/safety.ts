@@ -37,14 +37,15 @@ export function validateQuery(query: string, allowMutations: boolean): SafetyRes
 
   const trimmed = query.trim();
 
+  // Strip literals and comments FIRST so semicolons inside strings don't trigger blocks
+  // e.g. SELECT * FROM notes WHERE content = 'hello; world' is fine
+  const sanitized = stripLiteralsAndComments(trimmed);
+
   // Block multiple statements: strip trailing semicolon, then reject if any remain
-  const stripped = trimmed.replace(/;\s*$/, "");
-  if (stripped.includes(";")) {
+  const strippedSanitized = sanitized.replace(/;\s*$/, "");
+  if (strippedSanitized.includes(";")) {
     return { allowed: false, reason: "multiple statements not allowed" };
   }
-
-  // Strip literals and comments so keywords inside strings don't trigger blocks
-  const sanitized = stripLiteralsAndComments(trimmed);
 
   for (const keyword of MUTATION_KEYWORDS) {
     const re = new RegExp(`\\b${keyword}\\b`, "i");
