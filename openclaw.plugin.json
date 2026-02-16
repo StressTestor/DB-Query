@@ -1,0 +1,38 @@
+{
+  "id": "db-query",
+  "kind": "tool",
+  "name": "Database Query Tool",
+  "description": "safe SQL execution for openclaw agents. postgres, mysql, sqlite. read-only by default. query databases, inspect schemas, run migrations — all with safety rails.",
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "connections": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "driver": { "type": "string", "enum": ["sqlite", "postgres", "mysql"] },
+            "path": { "type": "string" },
+            "connectionString": { "type": "string" },
+            "readOnly": { "type": "boolean" }
+          },
+          "required": ["driver"]
+        }
+      },
+      "defaultConnection": { "type": "string" },
+      "maxRows": { "type": "number", "default": 1000, "maximum": 10000 },
+      "queryTimeout": { "type": "number", "default": 30000 },
+      "allowMutations": { "type": "boolean", "default": false }
+    }
+  },
+  "uiHints": {
+    "connections": {
+      "label": "Database Connections",
+      "help": "Named database connections. Use $ENV_VAR syntax in connection strings for secrets."
+    },
+    "allowMutations": {
+      "label": "Allow Mutations",
+      "help": "If false (default), blocks INSERT/UPDATE/DELETE/DROP/ALTER/TRUNCATE/CREATE. Per-connection readOnly overrides this."
+    }
+  }
+}

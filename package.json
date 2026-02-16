@@ -1,0 +1,41 @@
+{
+  "name": "db-query",
+  "version": "1.0.0",
+  "description": "safe SQL execution for openclaw agents. postgres, mysql, sqlite. read-only by default.",
+  "type": "module",
+  "main": "src/index.ts",
+  "openclaw": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sinclair/typebox": "^0.34.48"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.1.26",
+    "pg": ">=8.0.0",
+    "mysql2": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "pg": { "optional": true },
+    "mysql2": { "optional": true }
+  },
+  "keywords": [
+    "openclaw",
+    "plugin",
+    "database",
+    "sql",
+    "postgres",
+    "mysql",
+    "sqlite"
+  ],
+  "license": "MIT"
+}
