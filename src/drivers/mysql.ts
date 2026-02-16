@@ -13,9 +13,11 @@ export class MysqlDriver implements DatabaseDriver {
   async connect(): Promise<void> {
     let mysql2: any;
     try {
+      // @ts-ignore — mysql2 is an optional peer dependency
       mysql2 = await import("mysql2/promise");
     } catch {
       try {
+        // @ts-ignore — mysql2 is an optional peer dependency
         mysql2 = await import("mysql2");
         mysql2 = mysql2.default?.promise ?? mysql2.promise;
       } catch {

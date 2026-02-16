@@ -108,16 +108,16 @@ const plugin = {
             // Safety check
             const safety = validateQuery(query, !readOnly);
             if (!safety.allowed) {
-              return { content: [{ type: "text" as const, text: safety.reason! }] };
+              return { content: [{ type: "text" as const, text: safety.reason! }], details: null };
             }
 
             const driver = await getDriver(connName);
             const result = await driver.query(query, limit, cfg.queryTimeout);
             const output = formatResults(result.rows, format, result.totalAvailable);
 
-            return { content: [{ type: "text" as const, text: output }] };
+            return { content: [{ type: "text" as const, text: output }], details: null };
           } catch (e: any) {
-            return { content: [{ type: "text" as const, text: `Error: ${e.message}` }] };
+            return { content: [{ type: "text" as const, text: `Error: ${e.message}` }], details: null };
           }
         },
       },
@@ -152,20 +152,20 @@ const plugin = {
                   `${col.name.padEnd(maxName)} | ${col.type.padEnd(maxType)} | ${col.nullable ? "YES     " : "NO      "} | ${(col.defaultValue ?? "").toString().padEnd(10).slice(0, 10)} | ${col.primaryKey ? "YES" : ""}`
                 );
               }
-              return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+              return { content: [{ type: "text" as const, text: lines.join("\n") }], details: null };
             } else {
               const tables = await driver.listTables();
               if (tables.length === 0) {
-                return { content: [{ type: "text" as const, text: "No tables found." }] };
+                return { content: [{ type: "text" as const, text: "No tables found." }], details: null };
               }
               const lines = [`Tables in "${connName}":\n`];
               for (const t of tables) {
                 lines.push(`  ${t.name} (${t.type})`);
               }
-              return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+              return { content: [{ type: "text" as const, text: lines.join("\n") }], details: null };
             }
           } catch (e: any) {
-            return { content: [{ type: "text" as const, text: `Error: ${e.message}` }] };
+            return { content: [{ type: "text" as const, text: `Error: ${e.message}` }], details: null };
           }
         },
       },
@@ -198,7 +198,7 @@ const plugin = {
           if (Object.keys(cfg.connections).length === 0) {
             lines.push("  (none configured)");
           }
-          return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+          return { content: [{ type: "text" as const, text: lines.join("\n") }], details: null };
         },
       },
       { name: "db_connections" }
@@ -210,7 +210,8 @@ const plugin = {
       name: "db",
       description: "Quick SQL query against default connection",
       acceptsArgs: true,
-      handler: async (args?: string) => {
+      handler: async (ctx) => {
+        const args = ctx.args;
         if (!args?.trim()) {
           return { text: "Usage: /db SELECT * FROM users LIMIT 10" };
         }

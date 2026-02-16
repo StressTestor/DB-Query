@@ -13,6 +13,7 @@ export class PostgresDriver implements DatabaseDriver {
   async connect(): Promise<void> {
     let pg: any;
     try {
+      // @ts-ignore — pg is an optional peer dependency
       pg = await import("pg");
     } catch {
       throw new Error(
