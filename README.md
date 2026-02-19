@@ -2,7 +2,7 @@
 
 safe SQL execution for openclaw agents. postgres, mysql, sqlite. read-only by default. always.
 
-i got tired of telling the agent to "run this sql for me" through exec and hoping it didn't drop a table. now it can't. read-only by default. always.
+i got tired of telling the agent to "run this sql for me" through exec and hoping it didn't drop a table. now it can't. 
 
 day 5 of [20 days of claw](https://github.com/StressTestor).
 
