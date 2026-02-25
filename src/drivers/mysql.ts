@@ -49,7 +49,7 @@ export class MysqlDriver implements DatabaseDriver {
       if (msg.includes("Unknown database")) {
         throw new Error(`MySQL database not found. ${msg}`);
       }
-      throw new Error("MySQL connection failed (unknown error)");
+      throw new Error(`MySQL connection failed: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 
@@ -58,8 +58,9 @@ export class MysqlDriver implements DatabaseDriver {
 
     let wrappedSql = sql;
     const upper = sql.trim().toUpperCase();
-    if (upper.startsWith("SELECT") && !upper.includes("LIMIT")) {
-      wrappedSql = `${sql.replace(/;\s*$/, "")} LIMIT ${limit}`;
+    if (upper.startsWith("SELECT") || upper.startsWith("WITH")) {
+      const stripped = sql.replace(/;\s*$/, "");
+      wrappedSql = `SELECT * FROM (${stripped}) AS _q LIMIT ${limit}`;
     }
 
     const [rows] = await this.pool.query({ sql: wrappedSql, timeout: timeoutMs });

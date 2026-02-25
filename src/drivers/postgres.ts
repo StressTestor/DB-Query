@@ -43,7 +43,7 @@ export class PostgresDriver implements DatabaseDriver {
       if (msg.includes("does not exist")) {
         throw new Error(`PostgreSQL database not found. ${msg}`);
       }
-      throw new Error("PostgreSQL connection failed (unknown error)");
+      throw new Error(`PostgreSQL connection failed: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 
@@ -52,8 +52,9 @@ export class PostgresDriver implements DatabaseDriver {
 
     let wrappedSql = sql;
     const upper = sql.trim().toUpperCase();
-    if (upper.startsWith("SELECT") && !upper.includes("LIMIT")) {
-      wrappedSql = `${sql.replace(/;\s*$/, "")} LIMIT ${limit}`;
+    if (upper.startsWith("SELECT") || upper.startsWith("WITH")) {
+      const stripped = sql.replace(/;\s*$/, "");
+      wrappedSql = `SELECT * FROM (${stripped}) AS _q LIMIT ${limit}`;
     }
 
     const result = await this.pool.query({
