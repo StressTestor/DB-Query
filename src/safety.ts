@@ -1,6 +1,7 @@
 const MUTATION_KEYWORDS = [
   "INSERT", "UPDATE", "DELETE", "DROP", "ALTER",
   "TRUNCATE", "CREATE", "REPLACE", "MERGE", "GRANT", "REVOKE",
+  "CALL", "COPY", "VACUUM", "REINDEX",
 ];
 
 export interface SafetyResult {
@@ -14,6 +15,8 @@ export interface SafetyResult {
  */
 function stripLiteralsAndComments(sql: string): string {
   return sql
+    // Remove dollar-quoted strings (PostgreSQL): $$...$$, $tag$...$tag$
+    .replace(/\$([a-zA-Z0-9_]*)\$[\s\S]*?\$\1\$/g, "")
     // Remove single-quoted strings
     .replace(/'(?:[^'\\]|\\.)*'/g, "")
     // Remove double-quoted identifiers

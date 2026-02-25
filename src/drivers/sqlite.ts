@@ -3,6 +3,8 @@ import { resolvePath } from "../config.js";
 import { existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 
+let _timeoutWarned = false;
+
 export class SqliteDriver implements DatabaseDriver {
   readonly driverName = "sqlite";
   private db: any = null;
@@ -42,15 +44,18 @@ export class SqliteDriver implements DatabaseDriver {
     if (sql.length > 10_000) {
       throw new Error("Query too long — SQLite queries are limited to 10,000 characters as a DoS safeguard.");
     }
-    if (_timeoutMs > 0) {
+    if (_timeoutMs > 0 && !_timeoutWarned) {
+      _timeoutWarned = true;
       console.warn("db-query: SQLite driver does not enforce query timeouts (DatabaseSync is synchronous). Consider using postgres or mysql for timeout support.");
     }
 
-    // Wrap with LIMIT if it looks like a SELECT and doesn't already have one
+    // Wrap with LIMIT to cap result size. Uses a subquery to handle all cases
+    // (CTEs, subqueries that already contain LIMIT, etc.)
     let wrappedSql = sql;
     const upper = sql.trim().toUpperCase();
-    if (upper.startsWith("SELECT") && !upper.includes("LIMIT")) {
-      wrappedSql = `${sql.replace(/;\s*$/, "")} LIMIT ${limit + 1}`;
+    if (upper.startsWith("SELECT") || upper.startsWith("WITH")) {
+      const stripped = sql.replace(/;\s*$/, "");
+      wrappedSql = `SELECT * FROM (${stripped}) AS _q LIMIT ${limit + 1}`;
     }
 
     const stmt = this.db.prepare(wrappedSql);
